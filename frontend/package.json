@@ -10,13 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "@tensorflow-models/blazeface": "^0.1.0",
     "@tensorflow-models/coco-ssd": "^2.2.2",
     "@tensorflow-models/face-landmarks-detection": "^1.0.6",
     "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.21.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-router-dom": "^7.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

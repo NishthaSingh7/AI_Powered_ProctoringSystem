@@ -1,8 +1,10 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as blazeface from "@tensorflow-models/blazeface";
 
-const API_ENDPOINT = "http://localhost:4000/api/session";
+const API_ENDPOINT =
+  "https://nodejs-production-23f4.up.railway.app/api/session";
 
 const LOOK_AWAY_MS = 5000;
 const ABSENT_MS = 10000;
@@ -43,15 +45,19 @@ export default function WebcamRecorder() {
   const [status, setStatus] = useState("starting");
   const [recording, setRecording] = useState(false);
   const recordingRef = useRef(false);
-  useEffect(() => { recordingRef.current = recording; }, [recording]);
+  useEffect(() => {
+    recordingRef.current = recording;
+  }, [recording]);
 
-  const [mirror, setMirror] = useState(false);
+  const [mirror, setMirror] = useState(true);
   const [cocoLoaded, setCocoLoaded] = useState(false);
   const [facesCount, setFacesCount] = useState(0);
 
   const [events, setEvents] = useState([]);
   const eventsRef = useRef([]);
-  useEffect(() => { eventsRef.current = events; }, [events]);
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
 
   const countsRef = useRef({
     absentCount: 0,
@@ -63,7 +69,13 @@ export default function WebcamRecorder() {
   const [absentCount, setAbsentCount] = useState(0);
   const [lookAwayCount, setLookAwayCount] = useState(0);
   const [multipleFacesCount, setMultipleFacesCount] = useState(0);
-  const [itemCountsState, setItemCountsState] = useState({ phone: 0, laptop: 0, monitor: 0, book: 0, paper_notes: 0 });
+  const [itemCountsState, setItemCountsState] = useState({
+    phone: 0,
+    laptop: 0,
+    monitor: 0,
+    book: 0,
+    paper_notes: 0,
+  });
 
   // detection state
   const detectionState = useRef({
@@ -78,7 +90,12 @@ export default function WebcamRecorder() {
 
   // ---------- helpers ----------
   function pushEvent(type, meta = {}) {
-    const allowedWhenStopped = ["started_recording", "stopped_recording", "session_saved", "session_save_failed"];
+    const allowedWhenStopped = [
+      "started_recording",
+      "stopped_recording",
+      "session_saved",
+      "session_save_failed",
+    ];
     if (!recordingRef.current && !allowedWhenStopped.includes(type)) return;
     const ev = { type, ts: Date.now(), meta };
     setEvents((prev) => {
@@ -99,7 +116,8 @@ export default function WebcamRecorder() {
       setMultipleFacesCount(countsRef.current.multipleFacesCount);
     } else if (type === "item_detected" && meta?.category) {
       const cat = meta.category;
-      countsRef.current.itemCounts[cat] = (countsRef.current.itemCounts[cat] || 0) + 1;
+      countsRef.current.itemCounts[cat] =
+        (countsRef.current.itemCounts[cat] || 0) + 1;
       setItemCountsState({ ...countsRef.current.itemCounts });
     }
 
@@ -120,11 +138,18 @@ export default function WebcamRecorder() {
     return categories;
   }
 
-  function makeFullCanvasSnapshotDataURL({ maxW = 640, maxH = 360, quality = 0.66 } = {}) {
+  function makeFullCanvasSnapshotDataURL({
+    maxW = 640,
+    maxH = 360,
+    quality = 0.66,
+  } = {}) {
     try {
       const main = canvasRef.current;
       if (!main) return null;
-      const scale = Math.min(1, Math.min(maxW / main.width, maxH / main.height));
+      const scale = Math.min(
+        1,
+        Math.min(maxW / main.width, maxH / main.height)
+      );
       const sw = Math.max(1, Math.round(main.width * scale));
       const sh = Math.max(1, Math.round(main.height * scale));
       const tmp = document.createElement("canvas");
@@ -155,7 +180,13 @@ export default function WebcamRecorder() {
     setAbsentCount(0);
     setLookAwayCount(0);
     setMultipleFacesCount(0);
-    setItemCountsState({ phone: 0, laptop: 0, monitor: 0, book: 0, paper_notes: 0 });
+    setItemCountsState({
+      phone: 0,
+      laptop: 0,
+      monitor: 0,
+      book: 0,
+      paper_notes: 0,
+    });
 
     const now = new Date();
     setSessionStart(now);
@@ -179,16 +210,22 @@ export default function WebcamRecorder() {
     };
 
     const electronicItemCount =
-      (summary.itemCounts.phone || 0) + (summary.itemCounts.laptop || 0) + (summary.itemCounts.monitor || 0);
+      (summary.itemCounts.phone || 0) +
+      (summary.itemCounts.laptop || 0) +
+      (summary.itemCounts.monitor || 0);
 
     const start = sessionStart || new Date();
-    const startMs = start instanceof Date ? start.getTime() : new Date(start).getTime();
+    const startMs =
+      start instanceof Date ? start.getTime() : new Date(start).getTime();
     const endMs = end.getTime();
     const durationSec = Math.max(0, Math.round((endMs - startMs) / 1000));
 
     const payload = {
       username,
-      startTime: start instanceof Date ? start.toISOString() : new Date(start).toISOString(),
+      startTime:
+        start instanceof Date
+          ? start.toISOString()
+          : new Date(start).toISOString(),
       endTime: end.toISOString(),
       startTimeMs: startMs,
       endTimeMs: endMs,
@@ -210,6 +247,7 @@ export default function WebcamRecorder() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        credentials: "include",
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -224,29 +262,44 @@ export default function WebcamRecorder() {
       setStatus("save failed");
       pushEvent("session_save_failed", { error: String(err) });
     } finally {
-      setTimeout(() => setStatus((s) => s.replace("saving session...", "").replace("save failed", "")), 1800);
+      setTimeout(
+        () =>
+          setStatus((s) =>
+            s.replace("saving session...", "").replace("save failed", "")
+          ),
+        1800
+      );
     }
   }
 
   // ---------- Main effect: camera + models + loops ----------
   useEffect(() => {
     let mounted = true;
-    let localStream = null;
 
     async function startup() {
       try {
         setStatus("requesting camera...");
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-        localStream = stream;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+          audio: false,
+        });
         if (!mounted) {
-          try { stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+          try {
+            stream.getTracks().forEach((t) => t.stop());
+          } catch (e) {
+            console.log(e);
+          }
           return;
         }
 
         const v = videoRef.current;
         const c = canvasRef.current;
         if (!v) {
-          try { stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+          try {
+            stream.getTracks().forEach((t) => t.stop());
+          } catch (e) {
+            console.log(e);
+          }
           console.warn("videoRef.current missing; aborting camera attach");
           return;
         }
@@ -291,15 +344,26 @@ export default function WebcamRecorder() {
             ctx.fillRect(12, 12, 460, 34);
             ctx.fillStyle = "#ffffff";
             ctx.font = "13px Inter, system-ui, sans-serif";
-            ctx.fillText(`${status}${recordingRef.current ? "  •  REC" : ""}`, 20, 36);
+            ctx.fillText(
+              `${status}${recordingRef.current ? "  •  REC" : ""}`,
+              20,
+              36
+            );
             ctx.fillText(`faces: ${facesCount}`, c.width - 170, 36);
-            ctx.fillText(`coco: ${cocoLoaded ? "on" : "off"}`, c.width - 90, 36);
+            ctx.fillText(
+              `coco: ${cocoLoaded ? "on" : "off"}`,
+              c.width - 90,
+              36
+            );
 
             // draw face preds if available
-            if (faceModelRef.current && Array.isArray(faceModelRef.current._lastPreds)) {
+            if (
+              faceModelRef.current &&
+              Array.isArray(faceModelRef.current._lastPreds)
+            ) {
               ctx.save();
               ctx.lineWidth = 2;
-              ctx.strokeStyle = "#7af58c"; 
+              ctx.strokeStyle = "#7af58c";
               for (const p of faceModelRef.current._lastPreds || []) {
                 if (!p?.topLeft || !p?.bottomRight) continue;
                 let [x1, y1] = p.topLeft;
@@ -310,9 +374,10 @@ export default function WebcamRecorder() {
                 if (![x1, y1, w, h].every(Number.isFinite)) continue;
                 ctx.strokeRect(x1, y1, w, h);
                 if (p.landmarks && p.landmarks.length >= 3) {
-                  let nx = p.landmarks[2][0], ny = p.landmarks[2][1];
+                  let nx = p.landmarks[2][0],
+                    ny = p.landmarks[2][1];
                   if (mirror) nx = c.width - nx;
-                  ctx.fillStyle = "#ffd966"; 
+                  ctx.fillStyle = "#ffd966";
                   ctx.fillRect(nx - 3, ny - 3, 6, 6);
                 }
               }
@@ -320,7 +385,10 @@ export default function WebcamRecorder() {
             }
 
             // draw coco preds if available
-            if (cocoModelRef.current && Array.isArray(cocoModelRef.current._lastCocoPreds)) {
+            if (
+              cocoModelRef.current &&
+              Array.isArray(cocoModelRef.current._lastCocoPreds)
+            ) {
               ctx.save();
               ctx.lineWidth = 2;
               ctx.strokeStyle = "#ff7a7a";
@@ -331,15 +399,20 @@ export default function WebcamRecorder() {
                 let drawX = bx;
                 if (mirror) drawX = c.width - bx - bw;
                 ctx.strokeRect(drawX, by, bw, bh);
-                ctx.fillRect(drawX, (by > 20 ? by - 20 : by + 2), 120, 18);
+                ctx.fillRect(drawX, by > 20 ? by - 20 : by + 2, 120, 18);
                 ctx.fillStyle = "#fff";
                 ctx.font = "12px Inter, sans-serif";
-                ctx.fillText(`${p.class} ${Math.round((p.score || 0) * 100)}%`, drawX + 6, by > 20 ? by - 6 : by + 14);
+                ctx.fillText(
+                  `${p.class} ${Math.round((p.score || 0) * 100)}%`,
+                  drawX + 6,
+                  by > 20 ? by - 6 : by + 14
+                );
                 ctx.fillStyle = "rgba(255,122,122,0.16)";
               }
               ctx.restore();
             }
           } catch (e) {
+            console.log(e);
           }
           rafRef.current = requestAnimationFrame(drawFrame);
         }
@@ -352,7 +425,11 @@ export default function WebcamRecorder() {
         try {
           const fModel = await blazeface.load();
           if (!mounted) {
-            try { if (typeof fModel.dispose === "function") fModel.dispose(); } catch (e) {}
+            try {
+              if (typeof fModel.dispose === "function") fModel.dispose();
+            } catch (e) {
+              console.log(e);
+            }
             return;
           }
           faceModelRef.current = fModel;
@@ -379,15 +456,21 @@ export default function WebcamRecorder() {
             m._lastPreds = arr;
             setFacesCount(arr.length);
 
-            if (arr.length > 1 && recordingRef.current) pushEvent("multiple_faces", { count: arr.length });
-
+            if (arr.length > 1 && recordingRef.current)
+pushEvent("multiple_faces", {
+  count: arr.length,
+  at: new Date().toISOString(),
+});
             // absent detection
             if (arr.length === 0) {
               const since = Date.now() - detectionState.current.lastFaceSeenAt;
-              if (!detectionState.current.absentFlagged && since > ABSENT_MS && recordingRef.current) {
+              if (
+                !detectionState.current.absentFlagged &&
+                since > ABSENT_MS &&
+                recordingRef.current
+              ) {
                 detectionState.current.absentFlagged = true;
-                pushEvent("absent_10s", { sinceMs: since });
-              }
+pushEvent("absent_10s", { sinceMs: since, at: new Date().toISOString() });              }
             } else {
               detectionState.current.lastFaceSeenAt = Date.now();
               detectionState.current.absentFlagged = false;
@@ -414,13 +497,17 @@ export default function WebcamRecorder() {
               const horizOff = Math.abs(rel) > NOSE_REL_THRESHOLD;
               const now = Date.now();
               if (horizOff) {
-                if (!detectionState.current.lastLookAwayStart) detectionState.current.lastLookAwayStart = now;
+                if (!detectionState.current.lastLookAwayStart)
+                  detectionState.current.lastLookAwayStart = now;
                 else {
                   const dur = now - detectionState.current.lastLookAwayStart;
-                  if (!detectionState.current.lookAwayFlagged && dur >= LOOK_AWAY_MS && recordingRef.current) {
+                  if (
+                    !detectionState.current.lookAwayFlagged &&
+                    dur >= LOOK_AWAY_MS &&
+                    recordingRef.current
+                  ) {
                     detectionState.current.lookAwayFlagged = true;
-                    pushEvent("look_away_5s", { durMs: dur, rel });
-                  }
+pushEvent("look_away_5s", { durMs: dur, rel, at: new Date().toISOString() });                  }
                 }
               } else {
                 detectionState.current.lastLookAwayStart = null;
@@ -435,13 +522,17 @@ export default function WebcamRecorder() {
           }
         }, 320);
 
-        // dynamic coco import 
+        // dynamic coco import
         setStatus((s) => s + " | loading coco...");
         try {
           const cocoModule = await import("@tensorflow-models/coco-ssd");
           const cocoModel = await cocoModule.load();
           if (!mounted) {
-            try { if (typeof cocoModel.dispose === "function") cocoModel.dispose(); } catch (e) {}
+            try {
+              if (typeof cocoModel.dispose === "function") cocoModel.dispose();
+            } catch (e) {
+              console.log(e);
+            }
             return;
           }
           cocoModelRef.current = cocoModel;
@@ -458,13 +549,24 @@ export default function WebcamRecorder() {
             if (!m || !vEl || vEl.readyState < 2 || !cEl) return;
             try {
               if (!offscreenRef.current || !offscreenRef.current.canvas) {
-                const targetW = Math.min(OFFSCREEN_MAX_WIDTH, vEl.videoWidth || cEl.width || 640);
+                const targetW = Math.min(
+                  OFFSCREEN_MAX_WIDTH,
+                  vEl.videoWidth || cEl.width || 640
+                );
                 const scale = targetW / (vEl.videoWidth || cEl.width || 640);
-                const targetH = Math.max(1, Math.round((vEl.videoHeight || cEl.height || 480) * scale));
+                const targetH = Math.max(
+                  1,
+                  Math.round((vEl.videoHeight || cEl.height || 480) * scale)
+                );
                 const offCanvas = document.createElement("canvas");
                 offCanvas.width = targetW;
                 offCanvas.height = targetH;
-                offscreenRef.current = { canvas: offCanvas, ctx: offCanvas.getContext("2d"), width: targetW, height: targetH };
+                offscreenRef.current = {
+                  canvas: offCanvas,
+                  ctx: offCanvas.getContext("2d"),
+                  width: targetW,
+                  height: targetH,
+                };
               }
               const off = offscreenRef.current;
               off.ctx.clearRect(0, 0, off.width, off.height);
@@ -491,7 +593,8 @@ export default function WebcamRecorder() {
                 const cls = (p.class || "").toLowerCase();
                 if ((p.score || 0) < COCO_MIN_SCORE) return false;
                 const [bx, by, bw, bh] = p.bbox || [0, 0, 0, 0];
-                if (!Number.isFinite(bx) || !Number.isFinite(bw) || bw <= 0) return false;
+                if (!Number.isFinite(bx) || !Number.isFinite(bw) || bw <= 0)
+                  return false;
                 const areaFrac = (bw * bh) / frameArea;
                 if (areaFrac < COCO_MIN_AREA_FRAC) return false;
                 return true;
@@ -508,14 +611,16 @@ export default function WebcamRecorder() {
                   const [bx, by, bw, bh] = p.bbox;
                   const aspect = bw / (bh || 1);
                   const areaFrac = (bw * bh) / frameArea;
-                  if (areaFrac > 0.003 && (aspect < 0.5 || aspect > 2.0)) categoriesSeenThisCycle.add("phone");
+                  if (areaFrac > 0.003 && (aspect < 0.5 || aspect > 2.0))
+                    categoriesSeenThisCycle.add("phone");
                 }
               }
 
               const now = Date.now();
               for (const cat of Object.keys(SUSPICIOUS_CLASS_MAP)) {
                 if (recordingRef.current && categoriesSeenThisCycle.has(cat)) {
-                  cocoPersistence.current[cat] = (cocoPersistence.current[cat] || 0) + 1;
+                  cocoPersistence.current[cat] =
+                    (cocoPersistence.current[cat] || 0) + 1;
                 } else {
                   cocoPersistence.current[cat] = 0;
                 }
@@ -523,12 +628,21 @@ export default function WebcamRecorder() {
                 const count = cocoPersistence.current[cat] || 0;
                 const lastLogged = cocoLastLoggedAt.current[cat] || 0;
                 const cooldownElapsed = now - lastLogged > COCO_COOLDOWN_MS;
-                if (recordingRef.current && count >= COCO_PERSISTENCE_REQUIRED && cooldownElapsed) {
+                if (
+                  recordingRef.current &&
+                  count >= COCO_PERSISTENCE_REQUIRED &&
+                  cooldownElapsed
+                ) {
                   let bestPred = null;
                   let bestScore = -1;
                   for (const p of goodPreds) {
-                    const mappedCats = mapCocoClassToCategories((p.class || "").toLowerCase());
-                    if (mappedCats.includes(cat) && (p.score || 0) > bestScore) {
+                    const mappedCats = mapCocoClassToCategories(
+                      (p.class || "").toLowerCase()
+                    );
+                    if (
+                      mappedCats.includes(cat) &&
+                      (p.score || 0) > bestScore
+                    ) {
                       bestScore = p.score;
                       bestPred = p;
                     }
@@ -540,13 +654,21 @@ export default function WebcamRecorder() {
                     score: bestPred ? bestPred.score : null,
                     bbox: bestPred ? bestPred.bbox : null,
                     thumbnail,
+                    at: new Date().toISOString(),
                   });
                   cocoLastLoggedAt.current[cat] = now;
                   cocoPersistence.current[cat] = 0;
 
-                  if (["phone", "laptop", "monitor", "book", "paper_notes"].includes(cat)) {
-                    pushEvent("locked", { category: cat, ts: now });
-                  }
+                  if (
+                    [
+                      "phone",
+                      "laptop",
+                      "monitor",
+                      "book",
+                      "paper_notes",
+                    ].includes(cat)
+                  ) {
+pushEvent("locked", { category: cat, at: new Date().toISOString() });                  }
                 }
               }
             } catch (err) {
@@ -566,7 +688,7 @@ export default function WebcamRecorder() {
 
     startup();
 
-    // cleanup function 
+    // cleanup function
     return () => {
       mounted = false;
 
@@ -575,17 +697,23 @@ export default function WebcamRecorder() {
           cancelAnimationFrame(rafRef.current);
           rafRef.current = null;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.log(e);
+      }
 
       try {
         if (faceIntervalRef.current) clearInterval(faceIntervalRef.current);
         faceIntervalRef.current = null;
-      } catch (e) {}
+      } catch (e) {
+        console.log(e);
+      }
 
       try {
         if (cocoIntervalRef.current) clearInterval(cocoIntervalRef.current);
         cocoIntervalRef.current = null;
-      } catch (e) {}
+      } catch (e) {
+        console.log(e);
+      }
 
       try {
         const v = videoRef.current;
@@ -593,7 +721,9 @@ export default function WebcamRecorder() {
           v.srcObject.getTracks().forEach((t) => {
             try {
               t.stop();
-            } catch (e) {}
+            } catch (e) {
+              console.log(e);
+            }
           });
           v.srcObject = null;
         }
@@ -602,12 +732,24 @@ export default function WebcamRecorder() {
       }
 
       try {
-        if (faceModelRef.current && typeof faceModelRef.current.dispose === "function") faceModelRef.current.dispose();
-      } catch (e) {}
+        if (
+          faceModelRef.current &&
+          typeof faceModelRef.current.dispose === "function"
+        )
+          faceModelRef.current.dispose();
+      } catch (e) {
+        console.log(e);
+      }
 
       try {
-        if (cocoModelRef.current && typeof cocoModelRef.current.dispose === "function") cocoModelRef.current.dispose();
-      } catch (e) {}
+        if (
+          cocoModelRef.current &&
+          typeof cocoModelRef.current.dispose === "function"
+        )
+          cocoModelRef.current.dispose();
+      } catch (e) {
+        console.log(e);
+      }
 
       faceModelRef.current = null;
       cocoModelRef.current = null;
@@ -627,17 +769,23 @@ export default function WebcamRecorder() {
 
   function InfoCard({ title, value, subtitle }) {
     return (
-      <div style={{
-        padding: 12,
-        borderRadius: 10,
-        background: "#ffffff",
-        boxShadow: "0 8px 24px rgba(8,15,30,0.06)",
-        marginBottom: 10,
-        border: "1px solid rgba(15,23,42,0.04)"
-      }}>
+      <div
+        style={{
+          padding: 12,
+          borderRadius: 10,
+          background: "#ffffff",
+          boxShadow: "0 8px 24px rgba(8,15,30,0.06)",
+          marginBottom: 10,
+          border: "1px solid rgba(15,23,42,0.04)",
+        }}
+      >
         <div style={{ fontSize: 12, color: "#64748b" }}>{title}</div>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>{value}</div>
-        {subtitle ? <div style={{ fontSize: 12, color: "#94a3b8" }}>{subtitle}</div> : null}
+        <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
+          {value}
+        </div>
+        {subtitle ? (
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>{subtitle}</div>
+        ) : null}
       </div>
     );
   }
@@ -664,56 +812,220 @@ export default function WebcamRecorder() {
 
   // ---------- rendering part ----------
   return (
-    <div style={{ maxWidth: 1180, margin: "18px auto", fontFamily: "Inter, system-ui, -apple-system, Roboto, sans-serif", color: "#0f172a" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+    <div
+      style={{
+        width: "100%", // full viewport width
+        padding: "20px",
+        height: "100vh", // full viewport height
+        boxSizing: "border-box",
+        margin: 0, // remove default margin
+        fontFamily: "Inter, system-ui, -apple-system, Roboto, sans-serif",
+        color: "#eae9ff", // light text for contrast
+        backgroundColor: "black", // full black background
+        borderRadius: 0, // remove rounding (optional)
+        display: "flex", // center your content nicely
+        flexDirection: "column",
+        // alignItems: "center",
+        justifyContent: "flex-start", // change to "center" if you want vertical centering
+        overflow: "auto", // scroll if content exceeds screen
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+        }}
+      >
         <div>
-          <h2 style={{ margin: 0, color: "#0b1221" }}>Interview Proctor — Live</h2>
-          <div style={{ fontSize: 13, color: "#64748b" }}>Recording gated; events saved on Stop.</div>
+          <h2 style={{ margin: 0, color: "#ffffff" }}>
+            AI Powered Proctoring System
+          </h2>
+          <div style={{ fontSize: 13, color: "#64748b" }}>
+            Recording gated; events saved on Stop.
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <div style={{ padding: "6px 10px", borderRadius: 8, background: recording ? "#ffeaea" : "#f1f5f9", color: recording ? "#b91c1c" : "#475569", fontWeight: 700 }}>
+          <div
+            style={{
+              padding: "6px 10px",
+              borderRadius: 8,
+              background: recording ? "#ffeaea" : "#f1f5f9",
+              color: recording ? "#b91c1c" : "#475569",
+              fontWeight: 700,
+            }}
+          >
             {recording ? "Recording" : "Idle"}
           </div>
         </div>
       </div>
 
-      <div style={{ marginBottom: 10, display: "flex", gap: 10, alignItems: "center" }}>
+      <div
+        style={{
+          marginBottom: 10,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+        }}
+      >
         <label style={{ marginRight: 8, color: "#64748b" }}>Username</label>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(15,23,42,0.06)", width: 200 }} />
-        <button onClick={startRecording} disabled={recording} style={{ ...btnStyle, opacity: recording ? 0.6 : 1 }}>Start</button>
-        <button onClick={stopRecording} disabled={!recording} style={{ ...btnStyle, background: "#ef4444", opacity: !recording ? 0.6 : 1 }}>Stop & Save</button>
-        <button onClick={toggleMirror} style={btnAltStyle}>{mirror ? "Left is left" : "Selfie (mirror)"}</button>
-        <button onClick={manualUnlock} style={btnAltStyle}>Manual Unlock</button>
+        <input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 8,
+            border: "1px solid rgba(15,23,42,0.06)",
+            width: 200,
+          }}
+        />
+        <button
+          onClick={startRecording}
+          disabled={recording}
+          style={{ ...btnStyle, opacity: recording ? 0.6 : 1 }}
+        >
+          Start
+        </button>
+        <button
+          onClick={stopRecording}
+          disabled={!recording}
+          style={{
+            ...btnStyle,
+            background: "#ef4444",
+            opacity: !recording ? 0.6 : 1,
+          }}
+        >
+          Stop & Save
+        </button>
+        <button onClick={toggleMirror} style={btnAltStyle}>
+          {mirror ? "Flip View" : "Selfie View"}
+        </button>
+        <button onClick={manualUnlock} style={btnAltStyle}>
+          Manual Unlock
+        </button>
         <div style={{ marginLeft: 12, color: "#64748b" }}>{status}</div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "720px 1fr", gap: 18 }}>
+      <div
+        style={{ display: "grid", gridTemplateColumns: "720px 1fr", gap: 18 }}
+      >
         <div>
-          <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", background: "#0b1221", boxShadow: "0 12px 36px rgba(8,15,30,0.06)" }}>
-            <video ref={videoRef} style={{ display: "block", width: "100%", visibility: "hidden" }} playsInline muted />
-            <canvas ref={canvasRef} style={{ width: "100%", height: "100%", display: "block", background: "#020617" }} />
+          <div
+            style={{
+              position: "relative",
+              borderRadius: 12,
+              overflow: "hidden",
+              background: "#0b1221",
+              boxShadow: "0 12px 36px rgba(8,15,30,0.06)",
+            }}
+          >
+            <video
+              ref={videoRef}
+              style={{ display: "block", width: "100%", visibility: "hidden" }}
+              playsInline
+              muted
+            />
+            <canvas
+              ref={canvasRef}
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                background: "#020617",
+              }}
+            />
             {/* subtle top-left badge */}
-            <div style={{ position: "absolute", left: 12, top: 12, padding: "6px 8px", borderRadius: 8, background: "linear-gradient(90deg,#0ea5a4,#3b82f6)", color: "#fff", fontSize: 12, fontWeight: 700 }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 12,
+                top: 12,
+                padding: "6px 8px",
+                borderRadius: 8,
+                background: "linear-gradient(90deg,#0ea5a4,#3b82f6)",
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
               Proctor View
             </div>
           </div>
 
           <div style={{ marginTop: 14 }}>
             <h4 style={{ margin: "6px 0", color: "#0b1221" }}>Events</h4>
-            <div style={{ maxHeight: 300, overflow: "auto", border: "1px solid rgba(15,23,42,0.04)", padding: 10, borderRadius: 10, background: "#fff" }}>
+            <div
+              style={{
+                maxHeight: 300,
+                maxWidth: "100%",
+                overflow: "auto",
+                border: "1px solid rgba(15,23,42,0.04)",
+                padding: 10,
+                borderRadius: 10,
+                background: "#fff",
+              }}
+            >
               {eventsRef.current.length === 0 ? (
                 <div style={{ color: "#94a3b8" }}>No events yet.</div>
               ) : (
                 <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                   {eventsRef.current.map((e, i) => (
-                    <li key={i} style={{ display: "flex", gap: 12, padding: "10px 8px", borderBottom: "1px solid rgba(15,23,42,0.03)", alignItems: "center" }}>
-                      <div style={{ width: 92, height: 56, background: "#f8fafc", borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(15,23,42,0.03)" }}>
-                        {e.meta?.thumbnail ? <img src={e.meta.thumbnail} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="thumb" /> : <span style={{ color: "#cbd5e1" }}>—</span>}
+                    <li
+                      key={i}
+                      style={{
+                        display: "flex",
+                        gap: 12,
+                        padding: "10px 8px",
+                        borderBottom: "1px solid rgba(15,23,42,0.03)",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 92,
+                          height: 56,
+                          background: "#f8fafc",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1px solid rgba(15,23,42,0.03)",
+                        }}
+                      >
+                        {e.meta?.thumbnail ? (
+                          <img
+                            src={e.meta.thumbnail}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                            alt="thumb"
+                          />
+                        ) : (
+                          <span style={{ color: "#cbd5e1" }}>—</span>
+                        )}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, color: "#0b1221" }}>{e.type}</div>
-                        <div style={{ color: "#64748b", fontSize: 12 }}>{new Date(e.ts).toLocaleTimeString()}</div>
-                        {e.meta && Object.keys(e.meta).length ? <div style={{ fontSize: 12, color: "#475569", marginTop: 8 }}>{JSON.stringify(e.meta)}</div> : null}
+                        <div style={{ fontWeight: 700, color: "#0b1221" }}>
+                          {e.type}
+                        </div>
+                        <div style={{ color: "#64748b", fontSize: 12 }}>
+                          {new Date(e.ts).toLocaleTimeString()}
+                        </div>
+                        {e.meta && Object.keys(e.meta).length ? (
+                          <div
+                            style={{
+                              fontSize: 12,
+                              color: "#475569",
+                              marginTop: 8,
+                            }}
+                          >
+                            {JSON.stringify(e.meta)}
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   ))}
@@ -724,33 +1036,123 @@ export default function WebcamRecorder() {
         </div>
 
         <aside>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <InfoCard title="Absent (>10s)" value={countsRef.current.absentCount} />
-            <InfoCard title="Look-away (>5s)" value={countsRef.current.lookAwayCount} />
-            <InfoCard title="Multiple faces" value={countsRef.current.multipleFacesCount} />
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
+            <InfoCard
+              title="Absent (>10s)"
+              value={countsRef.current.absentCount}
+            />
+            <InfoCard
+              title="Look-away (>5s)"
+              value={countsRef.current.lookAwayCount}
+            />
+            <InfoCard
+              title="Multiple faces"
+              value={countsRef.current.multipleFacesCount}
+            />
             <InfoCard
               title="Electronics"
-              value={(countsRef.current.itemCounts.phone || 0) + (countsRef.current.itemCounts.laptop || 0) + (countsRef.current.itemCounts.monitor || 0)}
+              value={
+                (countsRef.current.itemCounts.phone || 0) +
+                (countsRef.current.itemCounts.laptop || 0) +
+                (countsRef.current.itemCounts.monitor || 0)
+              }
               subtitle="phone + laptop + monitor"
             />
           </div>
 
-          <div style={{ marginTop: 12, padding: 14, borderRadius: 12, background: "#fff", boxShadow: "0 12px 36px rgba(8,15,30,0.04)" }}>
+          <div
+            style={{
+              marginTop: 12,
+              padding: 14,
+              borderRadius: 12,
+              background: "#fff",
+              boxShadow: "0 12px 36px rgba(8,15,30,0.04)",
+            }}
+          >
             <h4 style={{ margin: 0, color: "#0b1221" }}>Item breakdown</h4>
-            <ul style={{ listStyle: "none", padding: 0, marginTop: 10, color: "#0b1221" }}>
-              <li style={{ marginBottom: 6 }}>Phone: <strong style={{ marginLeft: 8 }}>{(countsRef.current.itemCounts.phone || 0)}</strong></li>
-              <li style={{ marginBottom: 6 }}>Laptop: <strong style={{ marginLeft: 8 }}>{(countsRef.current.itemCounts.laptop || 0)}</strong></li>
-              <li style={{ marginBottom: 6 }}>Monitor: <strong style={{ marginLeft: 8 }}>{(countsRef.current.itemCounts.monitor || 0)}</strong></li>
-              <li style={{ marginBottom: 6 }}>Book: <strong style={{ marginLeft: 8 }}>{(countsRef.current.itemCounts.book || 0)}</strong></li>
-              <li>Paper/Notes: <strong style={{ marginLeft: 8 }}>{(countsRef.current.itemCounts.paper_notes || 0)}</strong></li>
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                marginTop: 10,
+                color: "#0b1221",
+              }}
+            >
+              <li style={{ marginBottom: 6 }}>
+                Phone:{" "}
+                <strong style={{ marginLeft: 8 }}>
+                  {countsRef.current.itemCounts.phone || 0}
+                </strong>
+              </li>
+              <li style={{ marginBottom: 6 }}>
+                Laptop:{" "}
+                <strong style={{ marginLeft: 8 }}>
+                  {countsRef.current.itemCounts.laptop || 0}
+                </strong>
+              </li>
+              <li style={{ marginBottom: 6 }}>
+                Monitor:{" "}
+                <strong style={{ marginLeft: 8 }}>
+                  {countsRef.current.itemCounts.monitor || 0}
+                </strong>
+              </li>
+              <li style={{ marginBottom: 6 }}>
+                Book:{" "}
+                <strong style={{ marginLeft: 8 }}>
+                  {countsRef.current.itemCounts.book || 0}
+                </strong>
+              </li>
+              <li>
+                Paper/Notes:{" "}
+                <strong style={{ marginLeft: 8 }}>
+                  {countsRef.current.itemCounts.paper_notes || 0}
+                </strong>
+              </li>
             </ul>
 
             <div style={{ marginTop: 12, color: "#64748b", fontSize: 13 }}>
-              Tip: Good lighting and centering the subject improves detection accuracy.
+              Tip: Good lighting and centering the subject improves detection
+              accuracy.
             </div>
           </div>
         </aside>
       </div>
+      <footer
+        style={{
+          width: "100%",
+          padding: "14px 24px",
+          marginTop: "auto",
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          color: "#d1d5db",
+          fontSize: "13px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          position: "relative",
+          bottom: 0,
+          left: 0,
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ color: "#9ca3af", fontWeight: 500 }}>
+          © {new Date().getFullYear()} Nishtha Singh
+        </div>
+        <div
+          style={{
+            color: "#f3f4f6",
+            fontWeight: 600,
+            fontSize: "13.5px",
+            letterSpacing: "0.3px",
+          }}
+        >
+          AI Powered Proctoring System
+        </div>
+      </footer>
     </div>
   );
 }
