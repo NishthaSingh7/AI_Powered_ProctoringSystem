@@ -1,9 +1,10 @@
-console.log("🔥🔥🔥 THIS IS THE REAL SERVER.JS 🔥🔥🔥");
+console.log("🔥🔥🔥 NEW SERVER VERSION DEPLOYED 🔥🔥🔥");
 
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const Session = require("./models/Session");
 
 const app = express();
 
@@ -18,11 +19,8 @@ app.use(
   }),
 );
 
-/* ✅ THIS handles OPTIONS automatically */
-app.use(express.json());
-app.get("/api/test", (req, res) => {
-  res.json({ ok: true, env: "railway" });
-});
+app.use(express.json({ limit: "90mb" }));
+app.use(express.urlencoded({ extended: true, limit: "90mb" }));
 
 /* ================== LOG ================== */
 app.use((req, res, next) => {
@@ -37,25 +35,44 @@ app.get("/health", (req, res) => {
 
 /* ================== ROUTES ================== */
 const dashboardRouter = require("./routes/dashboard");
-app.use("/api/dashboard", dashboardRouter);
+const sessionRouter = require("./routes/session");
 
-app.post("/api/session", async (req, res) => {
-  try {
-    console.log("📥 SESSION RECEIVED");
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/session", sessionRouter);
+
+// routes/dashboard.js (or wherever this route is)
+
+router.get("/sessions/:id", async (req, res) => {
+  const session = await Session.findById(req.params.id);
+  if (!session) return res.status(404).json({ error: "Not found" });
+
+  // 🔥 RISK CALCULATION (same logic everywhere)
+  const score =
+    session.lookAwayCount * 0.2 +
+    session.absentCount * 0.3 +
+    session.multipleFacesCount * 0.3 +
+    session.electronicItemCount * 0.2;
+
+  const suspiciousScore = Math.min(1, score);
+
+  const status =
+    suspiciousScore >= 0.75
+      ? "suspicious"
+      : suspiciousScore >= 0.3
+        ? "warning"
+        : "normal";
+
+  res.json({
+    ...session.toObject(),
+    suspiciousScore,
+    status,
+  });
 });
 
-/* ❌ NO app.options('*') */
-/* ❌ NO wildcard routes */
-/* ❌ NO manual OPTIONS handler */
+console.log("🔥 Dashboard + Session routes loaded");
 
 /* ================== START ================== */
 const PORT = process.env.PORT || 3000;
-console.log("🔥 Dashboard routes loaded");
-
 app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
 });
