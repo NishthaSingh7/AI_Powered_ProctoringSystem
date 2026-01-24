@@ -42,7 +42,7 @@ app.use("/api/session", sessionRouter);
 
 // routes/dashboard.js (or wherever this route is)
 
-router.get("/sessions/:id", async (req, res) => {
+app.get("/api/dashboard/sessions/:id", async (req, res) => {
   const session = await Session.findById(req.params.id);
   if (!session) return res.status(404).json({ error: "Not found" });
 
