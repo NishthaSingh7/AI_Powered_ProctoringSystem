@@ -2,12 +2,9 @@ import React, { useEffect, useState } from "react";
 import SessionCard from "../components/SessionCard";
 import "./dashboard.css";
 
-/**
- * CHANGE THIS ONLY IF BACKEND URL CHANGES
- */
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
-  "https://nodejs-production-23f4.up.railway.app";
+  "https://aiproctor-backend-production.up.railway.app";
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null);
@@ -16,72 +13,36 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // --------------------
-  // SAFE JSON FETCH
-  // --------------------
   async function safeFetchJSON(url) {
     const res = await fetch(url, { credentials: "include" });
-
-    const text = await res.text(); // read raw first
-
-    if (!res.ok) {
-      console.error("❌ API ERROR:", res.status, text);
-      throw new Error("API request failed");
-    }
-
-    try {
-      return JSON.parse(text);
-    } catch {
-      console.error("❌ NOT JSON RESPONSE:", text);
-      throw new Error("Invalid JSON response");
-    }
+    if (!res.ok) throw new Error("API failed");
+    return res.json();
   }
 
-  // --------------------
-  // LOAD SUMMARY
-  // --------------------
   async function loadSummary() {
-    try {
-      const data = await safeFetchJSON(`${API_BASE}/api/dashboard/summary`);
-      setSummary(data);
-    } catch (err) {
-      console.error("Summary load failed", err);
-    }
+    const data = await safeFetchJSON(`${API_BASE}/api/dashboard/summary`);
+    setSummary(data);
   }
 
-  // --------------------
-  // LOAD SESSION LIST
-  // --------------------
   async function loadSessions() {
     try {
       const data = await safeFetchJSON(
         `${API_BASE}/api/dashboard/sessions?limit=25`,
       );
       setSessions(data.sessions || []);
-    } catch (err) {
-      console.error("Sessions load failed", err);
     } finally {
       setLoading(false);
     }
   }
 
-  // --------------------
-  // LOAD FULL SESSION
-  // --------------------
-  async function openSessionReport(sessionId) {
+  async function openSessionReport(id) {
     setDetailLoading(true);
     setSelected(null);
-
-    try {
-      const data = await safeFetchJSON(
-        `${API_BASE}/api/dashboard/sessions/${sessionId}`,
-      );
-      setSelected(data);
-    } catch (err) {
-      console.error("Session report failed", err);
-    } finally {
-      setDetailLoading(false);
-    }
+    const data = await safeFetchJSON(
+      `${API_BASE}/api/dashboard/sessions/${id}`,
+    );
+    setSelected(data);
+    setDetailLoading(false);
   }
 
   useEffect(() => {
@@ -90,22 +51,26 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="dash-container">
+    <div className="dash-root">
       <h1 className="dash-title">Proctor Dashboard</h1>
 
-      <div className="dash-cards">
-        <Card title="Total Sessions" value={summary?.totalSessions} />
-        <Card title="Active Sessions" value={summary?.activeSessions} />
-        <Card title="Suspicious Sessions" value={summary?.suspiciousSessions} />
-        <Card title="Avg Duration (sec)" value={summary?.avgDurationSec} />
+      {/* SUMMARY */}
+      <div className="dash-summary">
+        <SummaryCard title="Total Sessions" value={summary?.totalSessions} />
+        <SummaryCard title="Active Sessions" value={summary?.activeSessions} />
+        <SummaryCard title="Suspicious" value={summary?.suspiciousSessions} />
+        <SummaryCard
+          title="Avg Duration (sec)"
+          value={summary?.avgDurationSec}
+        />
       </div>
 
-      <h2 className="dash-subtitle">Recent Sessions</h2>
+      <h2 className="dash-section">Recent Sessions</h2>
 
       {loading ? (
-        <p>Loading sessions...</p>
+        <p className="dash-loading">Loading sessions…</p>
       ) : (
-        <div className="dash-sessions">
+        <div className="dash-session-grid">
           {sessions.map((s) => (
             <SessionCard
               key={s._id}
@@ -116,6 +81,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* MODAL */}
       {(detailLoading || selected) && (
         <div className="dash-modal-overlay" onClick={() => setSelected(null)}>
           <div className="dash-modal" onClick={(e) => e.stopPropagation()}>
@@ -126,11 +92,15 @@ export default function Dashboard() {
 
             <div className="dash-modal-body">
               {detailLoading ? (
-                <p>Loading...</p>
+                <p>Loading…</p>
               ) : (
                 <>
                   <p>
                     <b>User:</b> {selected.username}
+                  </p>
+                  <p>
+                    <b>Started:</b>{" "}
+                    {new Date(selected.startTime).toLocaleString()}
                   </p>
                   <p>
                     <b>Status:</b> {selected.status}
@@ -148,11 +118,11 @@ export default function Dashboard() {
   );
 }
 
-function Card({ title, value }) {
+function SummaryCard({ title, value }) {
   return (
-    <div className="dash-card">
-      <div className="dash-card-title">{title}</div>
-      <div className="dash-card-value">{value ?? "-"}</div>
+    <div className="summary-card">
+      <span>{title}</span>
+      <strong>{value ?? "-"}</strong>
     </div>
   );
 }

@@ -13,7 +13,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://nodejs-production-23f4.up.railway.app",
+      "https://aiproctoringsystembynish.netlify.app",
     ],
     credentials: true,
   }),

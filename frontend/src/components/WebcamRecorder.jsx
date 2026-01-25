@@ -4,7 +4,7 @@ import * as tf from "@tensorflow/tfjs";
 import * as blazeface from "@tensorflow-models/blazeface";
 
 const API_ENDPOINT =
-  "https://nodejs-production-23f4.up.railway.app/api/session";
+  "https://aiproctor-backend-production.up.railway.app/api/session";
 
 const LOOK_AWAY_MS = 5000;
 const ABSENT_MS = 10000;
@@ -242,6 +242,10 @@ export default function WebcamRecorder() {
     };
 
     setStatus("saving session...");
+    console.log(
+      "SESSION PAYLOAD SIZE (bytes):",
+      JSON.stringify(payload).length,
+    );
     try {
       const res = await fetch(API_ENDPOINT, {
         method: "POST",

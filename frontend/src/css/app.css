@@ -1,19 +1,92 @@
-/* src/app.css */
+/* src/css/app.css */
+
 :root {
-  --bg: #f6f7fb;
-  --card: #fff;
-  --accent: #4f46e5;
-  --muted: #6b7280;
+  --bg-dark: #020617;
+  --panel-dark: #0f172a;
+  --border-dark: #1e293b;
+  --text-main: #e5e7eb;
+  --text-muted: #94a3b8;
+  --accent: #6366f1;
 }
 
-body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: var(--bg); color:#111827; }
+/* RESET */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  background: var(--bg-dark);
+  color: var(--text-main);
+}
+
+/* NAVBAR */
 .nav {
-  height: 56px; display:flex; align-items:center; justify-content:space-between;
-  padding: 0 18px; background: white; box-shadow: 0 1px 6px rgba(16,24,40,0.06);
-}
-.nav-left { font-weight:700; font-size:16px; }
-.nav-links { display:flex; gap:12px; align-items:center; }
-.nav-link { text-decoration:none; color:var(--muted); padding:8px 10px; border-radius:6px; }
-.nav-link:hover { background: rgba(79,70,229,0.06); color:var(--accent); }
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
 
-.app-main { padding:0px; max-width:"auto"; margin: 0 auto; }
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.85),
+    rgba(2, 6, 23, 0.85)
+  );
+
+  border-bottom: 1px solid var(--border-dark);
+}
+
+/* BRAND */
+/* .nav-left {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  color: var(--text-main);
+} */
+.nav-left {
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.nav-left span {
+  color: #6366f1;
+}
+
+/* LINKS */
+.nav-links {
+  display: flex;
+  gap: 14px;
+}
+
+.nav-link {
+  position: relative;
+  text-decoration: none;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--text-main);
+}
+
+/* ACTIVE LINK */
+.nav-link.active {
+  color: white;
+}
+
+.nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  bottom: -10px;
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #22d3ee);
+  border-radius: 999px;
+}
+
+/* MAIN WRAPPER */
+.app-main {
+  padding: 0;
+}
