@@ -1,104 +1,71 @@
-# 🎥 AI-Powered Interview/Exam Proctoring System
+# AI-Powered Proctoring System
 
-An AI-based online proctoring system that monitors candidates during online exams or interviews using **computer vision**.  
-The system ensures fairness and prevents cheating by detecting suspicious activities in real-time such as:
+Real-time AI exam monitoring using **computer vision in the browser** — detects face anomalies, suspicious objects, tab switching, and builds a risk score for each session.
 
-- 👤 Candidate absence
+**Portfolio:** [nishthasinghportfolio.netlify.app](https://nishthasinghportfolio.netlify.app/)
+
+## What it detects
+
+- 👤 Candidate absence (no face > 10 seconds)
 - 👀 Look-away for more than 5 seconds
-- 👥 Multiple faces detected
-- 📱📚 Unauthorized items (phones, laptops, books, notes, monitors)
+- 👥 Multiple faces in frame
+- 📱 Unauthorized items via COCO-SSD (phone, laptop, book, notes, monitor)
+- 🗂️ Tab switching and screen minimization (browser activity tracking)
 
----
+## Features
 
-## 🚀 Features
-- Real-time **face detection** with BlazeFace
+- Real-time **face detection** with BlazeFace (TensorFlow.js)
 - **Look-away detection** using nose landmark offset
-- **Absent detection** if no face >10 seconds
-- **Multiple faces** alert if >1 detected
-- **Suspicious item detection** with Coco-SSD (phones, laptops, monitors, books, notes)
-- **Event logging** with timestamps & thumbnails
-- **Session summary** with counts (absent, look-away, items)
+- **Suspicious item detection** with COCO-SSD
+- **Event logging** with timestamps and thumbnails
+- **Session summary** with risk counts
 - **MongoDB persistence** via Node.js/Express backend
+- Admin-friendly session data for review
 
----
+## Architecture
 
-## 🏗️ System Architecture
-**Frontend (React + TensorFlow.js)**  
-- Access webcam & run ML models in browser  
-- Detect faces & objects  
-- Log events + live UI dashboard  
-- Send session data to backend  
-
-**Backend (Node.js + Express)**  
-- REST API endpoint `/api/session`  
-- Stores session data into MongoDB Atlas  
-- Responds with session confirmation  
-
-**Database (MongoDB Atlas)**  
-- Stores session documents including:  
-  - Username  
-  - Start/End times, duration  
-  - Event logs with timestamps & thumbnails  
-  - Summary counts (absent, look-away, suspicious items)
-
----
-
-## 📂 Project Structure
 ```
-proctoring-system/
-│── frontend/               # React + TensorFlow.js client
-│   ├── src/components/
-│   │   └── WebcamRecorder.jsx
-│   └── package.json
-│
-│── backend/                # Node.js + Express server
-│   ├── server.js
-│   ├── models/Session.js
-│   └── package.json
-│
-│── README.md
+Frontend (React + TensorFlow.js)     Backend (Node.js + Express)     MongoDB Atlas
+────────────────────────────────     ───────────────────────────     ─────────────
+Webcam access                        POST /api/session               Session docs
+BlazeFace + COCO-SSD in browser  →   Validate & store events    →   Events + summaries
+Live event dashboard                 REST API                      Risk analytics
 ```
 
----
+## Tech stack
 
-## ⚙️ Tech Stack
-- **Frontend**: React (Vite), TensorFlow.js, BlazeFace, Coco-SSD  
-- **Backend**: Node.js, Express.js, Mongoose  
-- **Database**: MongoDB Atlas (cloud-hosted)  
+- **Frontend:** React (Vite), TensorFlow.js, BlazeFace, COCO-SSD
+- **Backend:** Node.js, Express, Mongoose
+- **Database:** MongoDB Atlas
 
----
+## Run locally
 
-## 🖥️ Installation & Setup
-
-### 1️⃣ Clone the repo
+### 1. Clone
 ```bash
-git clone https://github.com/yourusername/proctoring-system.git
-cd proctoring-system
+git clone https://github.com/NishthaSingh7/AI_Powered_ProctoringSystem.git
+cd AI_Powered_ProctoringSystem
 ```
 
-### 2️⃣ Frontend Setup
+### 2. Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend runs on `http://localhost:5173/`
+→ http://localhost:5173
 
-### 3️⃣ Backend Setup
+### 3. Backend
 ```bash
 cd backend
 npm install
 npm start
 ```
-Backend runs on `http://localhost:4000/`
+→ http://localhost:4000
 
----
+## API
 
-## 🔗 API Endpoint
-- **POST** `/api/session`  
-  Save a session to the database.
+**POST** `/api/session` — save a proctoring session
 
-**Example Payload:**
 ```json
 {
   "username": "student_1",
@@ -112,33 +79,26 @@ Backend runs on `http://localhost:4000/`
   "absentCount": 1,
   "lookAwayCount": 3,
   "multipleFacesCount": 2,
-  "electronicItemCount": 4,
-  "itemCounts": { "phone": 2, "laptop": 1, "monitor": 1, "book": 2, "paper_notes": 1 }
+  "electronicItemCount": 4
 }
 ```
 
----
+## Project structure
 
-## 📊 Sample Proctoring Report
-**Candidate:** student_1  
-- Duration: 30 min 29 sec  
-- Absent: 1  
-- Look-away: 3  
-- Multiple faces: 2  
-- Electronic items: 4  
+```
+├── frontend/               # React + TensorFlow.js client
+│   └── src/components/
+│       └── WebcamRecorder.jsx
+├── backend/                # Node.js + Express server
+│   ├── server.js
+│   └── models/Session.js
+└── README.md
+```
 
-**Conclusion:** Candidate was inattentive at times and used suspicious items. Flagged for review.
+## Related work
 
----
-
-## 🔮 Future Improvements
-- Admin dashboard for report viewing
-- Audio monitoring (detect background conversation)
-- More accurate custom-trained object detection models
-- Deployment: Netlify/Vercel (frontend) + Render/Heroku (backend)
+Integrated into [Nish-Ed](https://github.com/NishthaSingh7/nish-educates) — a full-stack learning platform with secure online assessments.
 
 ---
 
-## 👩‍💻 Author
-**Nishtha Singh**  
-_Project created as part of Interview/Exam Proctoring research & development._
+Built by **Nishtha Singh**
