@@ -3,6 +3,9 @@
 ## Project name
 AI-Powered Proctoring System
 
+## Year
+2025
+
 ## Purpose
 Real-time AI exam monitoring that uses computer vision in the browser to detect face anomalies, suspicious objects, and tab switching, then builds a risk score for each session.
 
