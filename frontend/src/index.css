@@ -8,7 +8,7 @@ html, body {
 body { font-family: Inter, system-ui, sans-serif; margin: 0px;  }
 .app { display:flex; flex-direction:column; align-items:center; gap:16px; }
 video, canvas { width: 640px; height: 480px; border-radius: 8px; background: #000; }
-canvas { position: absolute; left: 0; top: 0; pointer-events: none; } */
+canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
 .controls { margin-top: 8px; }
 .events { max-height: 480px; overflow:auto; width: 320px; padding-left: 10px; border-left: 1px solid #eee; }
 button { padding: 8px 12px; border-radius: 6px; cursor: pointer; }
